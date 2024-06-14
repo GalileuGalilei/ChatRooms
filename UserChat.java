@@ -53,6 +53,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         }
 
         currentRoom.joinRoom(usrName, this);
+        RoomUI(this, currentRoom);
     }
 
     public void sendMessage(String msg) throws RemoteException 
@@ -64,6 +65,25 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         else 
         {
             System.out.println("You are not in a room.");
+        }
+    } 
+
+    private void RoomUI(UserChat self, IRoomChat room) throws RemoteException
+    {
+        System.out.print("type 'exit' to leave the room\n");
+        Scanner scanner = new Scanner(System.in);
+        while(true)
+        {
+            System.out.print(">> ");
+            String msg = scanner.nextLine();
+
+            if(msg.equals("exit"))
+            {
+                room.leaveRoom(self.usrName);
+                break;
+            }
+
+            room.sendMsg(self.usrName, msg);
         }
     }
 
@@ -82,7 +102,8 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
             UserChat client = new UserChat(usrName, server, host);
 
             while (true) {
-                System.out.println("1. List rooms\n2. Create room\n3. Join room\n4. Send message");
+                System.out.println("Choose an option:");
+                System.out.println("1. List rooms\n2. Create room\n3. Join room");
                 int choice = Integer.parseInt(scanner.nextLine());
 
                 switch (choice) {
@@ -98,11 +119,6 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
                         System.out.print("Enter room name to join: ");
                         roomName = scanner.nextLine();
                         client.joinRoom(roomName);
-                        break;
-                    case 4:
-                        System.out.print("Enter message: ");
-                        String msg = scanner.nextLine();
-                        client.sendMessage(msg);
                         break;
                     default:
                         System.out.println("Invalid choice.");
