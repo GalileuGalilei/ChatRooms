@@ -1,136 +1,135 @@
 import java.rmi.server.UnicastRemoteObject;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
-import java.util.Scanner;
+import javax.swing.*;
+import java.awt.event.*;
 
 public class UserChat extends UnicastRemoteObject implements IUserChat {
     private String usrName;
     private IServerChat server;
     private IRoomChat currentRoom;
     private Registry registry;
+    private JFrame frame;
+    private JTextArea chatArea;
+    private JTextField inputField;
 
-    protected UserChat(String usrName, IServerChat server, Registry registry) throws RemoteException 
-    {
+    protected UserChat(String usrName, IServerChat server, Registry registry) throws RemoteException {
         this.usrName = usrName;
         this.server = server;
         this.registry = registry;
+        setupUI();
     }
 
-    public void deliverMsg(String senderName, String msg) throws RemoteException 
-    {
-        System.out.println(senderName + ": " + msg);
+    private void setupUI() {
+        frame = new JFrame("Chat Room");
+        chatArea = new JTextArea();
+        inputField = new JTextField();
+
+        chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+        chatArea.setWrapStyleWord(true);
+
+        inputField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    sendMessage(inputField.getText());
+                    inputField.setText("");
+                } catch (RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        frame.add(new JScrollPane(chatArea), "Center");
+        frame.add(inputField, "South");
+
+        frame.setSize(400, 400);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 
-    public void listRooms() throws RemoteException 
-    {
+    public void deliverMsg(String senderName, String msg) throws RemoteException {
+        chatArea.append(senderName + ": " + msg + "\n");
+    }
+
+    public void listRooms() throws RemoteException {
         ArrayList<String> rooms = server.getRooms();
-        System.out.println("Available rooms: " + rooms);
+        JOptionPane.showMessageDialog(frame, "Available rooms: " + rooms);
     }
 
-    public void joinRoom(String roomName) throws RemoteException
-    {
-        if (currentRoom != null) 
-        {
+    public void joinRoom(String roomName) throws RemoteException {
+        if (currentRoom != null) {
             currentRoom.leaveRoom(usrName);
         }
 
-        try 
-        {    
-            //stub
+        try {
             currentRoom = (IRoomChat) registry.lookup(roomName);
-        } 
-        catch (Exception e) 
-        {
+        } catch (Exception e) {
             currentRoom = null;
             e.printStackTrace();
         }
 
-        if (currentRoom == null) 
-        {
-            System.out.println("Room not found.");
+        if (currentRoom == null) {
+            JOptionPane.showMessageDialog(frame, "Room not found.");
             return;
         }
 
         currentRoom.joinRoom(usrName, this);
-        RoomUI(this, currentRoom);
+        chatArea.setText(""); // Clear the chat area for the new room
     }
 
-    public void sendMessage(String msg) throws RemoteException 
-    {
-        if (currentRoom != null) 
-        {
+    public void sendMessage(String msg) throws RemoteException {
+        if (currentRoom != null) {
             currentRoom.sendMsg(usrName, msg);
-        } 
-        else 
-        {
-            System.out.println("You are not in a room.");
-        }
-    } 
-
-    private void RoomUI(UserChat self, IRoomChat room) throws RemoteException
-    {
-        System.out.print("type 'exit' to leave the room\n");
-        Scanner scanner = new Scanner(System.in);
-        while(true)
-        {
-            System.out.print(">> ");
-            String msg = scanner.nextLine();
-
-            if(msg.equals("exit"))
-            {
-                room.leaveRoom(self.usrName);
-                break;
-            }
-
-            room.sendMsg(self.usrName, msg);
+        } else {
+            JOptionPane.showMessageDialog(frame, "You are not in a room.");
         }
     }
 
-    public static void main(String[] args) 
-    {
+    public static void main(String[] args) {
         String host = "26.3.100.186";
         int port = 3000;
 
-        try 
-        {
+        try {
             Registry registry = LocateRegistry.getRegistry(host, port);
             IServerChat server = (IServerChat) registry.lookup("Servidor");
 
-            Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter your name: ");
-            String usrName = scanner.nextLine();
+            String usrName = JOptionPane.showInputDialog("Enter your name:");
+            if (usrName == null || usrName.trim().isEmpty()) {
+                System.exit(0);
+            }
 
             UserChat client = new UserChat(usrName, server, registry);
             registry.rebind(usrName, client);
 
             while (true) {
-                System.out.println("Choose an option:");
-                System.out.println("1. List rooms\n2. Create room\n3. Join room");
-                int choice = Integer.parseInt(scanner.nextLine());
+                String[] options = {"List rooms", "Create room", "Join room"};
+                int choice = JOptionPane.showOptionDialog(null, "Choose an option:", "Chat Client",
+                        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 
                 switch (choice) {
-                    case 1:
+                    case 0:
                         client.listRooms();
                         break;
-                    case 2:
-                        System.out.print("Enter room name to create: ");
-                        String roomName = scanner.nextLine();
-                        server.createRoom(roomName);
+                    case 1:
+                        String roomName = JOptionPane.showInputDialog("Enter room name to create:");
+                        if (roomName != null && !roomName.trim().isEmpty()) {
+                            server.createRoom(roomName);
+                        }
                         break;
-                    case 3:
-                        System.out.print("Enter room name to join: ");
-                        roomName = scanner.nextLine();
-                        client.joinRoom(roomName);
+                    case 2:
+                        roomName = JOptionPane.showInputDialog("Enter room name to join:");
+                        if (roomName != null && !roomName.trim().isEmpty()) {
+                            client.joinRoom(roomName);
+                        }
                         break;
                     default:
-                        System.out.println("Invalid choice.");
-                        break;
+                        System.exit(0);
                 }
             }
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
