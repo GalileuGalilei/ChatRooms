@@ -1,6 +1,8 @@
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -8,13 +10,13 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
     private String usrName;
     private IServerChat server;
     private IRoomChat currentRoom;
-    private String host;
+    private Registry registry;
 
-    protected UserChat(String usrName, IServerChat server, String host) throws RemoteException 
+    protected UserChat(String usrName, IServerChat server, Registry registry) throws RemoteException 
     {
         this.usrName = usrName;
         this.server = server;
-        this.host = host;
+        this.registry = registry;
     }
 
     public void deliverMsg(String senderName, String msg) throws RemoteException 
@@ -38,7 +40,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         try 
         {    
             //stub
-            currentRoom = (IRoomChat) Naming.lookup("rmi://" + host + '/' + roomName);
+            currentRoom = (IRoomChat) registry.lookup(roomName);
         } 
         catch (Exception e) 
         {
@@ -89,17 +91,20 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
 
     public static void main(String[] args) 
     {
-        String host = "localhost";
+        String host = "26.3.100.186";
+        int port = 3000;
 
         try 
         {
-            IServerChat server = (IServerChat) Naming.lookup("rmi://" + host + '/' + "Servidor");
+            Registry registry = LocateRegistry.getRegistry(host, port);
+            IServerChat server = (IServerChat) registry.lookup("Servidor");
 
             Scanner scanner = new Scanner(System.in);
             System.out.print("Enter your name: ");
             String usrName = scanner.nextLine();
 
-            UserChat client = new UserChat(usrName, server, host);
+            UserChat client = new UserChat(usrName, server, registry);
+            registry.rebind(usrName, client);
 
             while (true) {
                 System.out.println("Choose an option:");

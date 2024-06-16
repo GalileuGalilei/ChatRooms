@@ -11,11 +11,14 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat
 {
     private ArrayList<String> roomList;
     private Map<String, IRoomChat> rooms;
+    Registry registry;
     
-    public ServerChat() throws RemoteException
+    public ServerChat(Registry registry) throws RemoteException
     {
         roomList = new ArrayList<>();
         rooms = new HashMap<>();
+        this.registry = registry;
+
     }
     
     public synchronized ArrayList<String> getRooms() throws RemoteException 
@@ -32,7 +35,7 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat
             rooms.put(roomName, newRoom);
             try 
             {
-                Naming.rebind(roomName, newRoom);
+                registry.rebind(roomName, newRoom);
             } 
             catch (Exception e) 
             {
@@ -49,14 +52,14 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat
     public static void main(String[] args) 
     {
         int port = 3000;
-        String host = "localhost";
 
         try 
         {
-            IServerChat server = new ServerChat();
-            Registry registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.createRegistry(port);
+            IServerChat server = new ServerChat(registry);
             registry.rebind("Servidor", server);
             System.out.println("Server is ready.");
+            System.out.println(registry);
         } catch (Exception e) 
         {
             e.printStackTrace();
