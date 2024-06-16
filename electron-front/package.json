@@ -1,0 +1,19 @@
+{
+  "name": "electron-front",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^31.0.1"
+  },
+  "dependencies": {
+    "net": "^1.0.2",
+    "websocket": "^1.0.35",
+    "ws": "^8.17.0"
+  }
+}

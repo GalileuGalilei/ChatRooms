@@ -1,3 +1,4 @@
+package java_backend;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -6,6 +7,7 @@ import java.util.Map;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+
 
 public class ServerChat extends UnicastRemoteObject implements IServerChat
 {
@@ -48,15 +50,17 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat
 
     public static void main(String[] args) 
     {
-        int port = 3000;
-        String host = "localhost";
+
+        int port = 1099;
 
         try 
         {
-            IServerChat server = new ServerChat();
-            Registry registry = LocateRegistry.getRegistry();
+            IServerChat server = (IServerChat) new ServerChat();
+            Registry registry = LocateRegistry.createRegistry(port);
             registry.rebind("Servidor", server);
             System.out.println("Server is ready.");
+            //print server address
+            System.out.println("Server address: " + registry); 
         } catch (Exception e) 
         {
             e.printStackTrace();

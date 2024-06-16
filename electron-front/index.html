@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./renderer.js"></script>
+  <title>Chatroom Display</title>
+</head>
+<body>
+    <form>
+        <input type="text" id="userName" placeholder="Enter your name">
+        <button id="sendButton" >Send User Name</button>
+    </form>
+    <div id="chatroom"></div>
+    <div id="messages"></div>
+    <script>
+        //print in the backend
+        const sendButton = document.getElementById('sendButton')
+        const userName = document.getElementById('userName')
+        sendButton.addEventListener('click', () => 
+        {
+            window.api.sendUsername(userName.value);
+        })
+    </script>
+</html>

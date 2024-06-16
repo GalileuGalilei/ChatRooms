@@ -1,7 +1,9 @@
+package java_backend;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.HashMap;
+
 
 public class RoomChat extends UnicastRemoteObject implements IRoomChat {
     private String roomName;
