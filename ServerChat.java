@@ -149,7 +149,7 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
     }
 
     public static void main(String[] args) {
-        String host = "rmi://192.168.161.105:2020";
+        String host = "rmi://192.168.199.105:2020";
         int port = 2020;
 
         try {

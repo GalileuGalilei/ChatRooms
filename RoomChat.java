@@ -24,12 +24,8 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
 
     public void joinRoom(String usrName, IUserChat user) throws RemoteException 
     {
+        System.out.println("Usuario " + usrName + " entrou na sala " + roomName);
         userList.put(usrName, user);
-        
-        for (IUserChat u : userList.values()) 
-        {
-            u.deliverMsg("Servidor: ", usrName + " entrou na sala");
-        }
     }
 
     public void leaveRoom(String usrName) throws RemoteException 
