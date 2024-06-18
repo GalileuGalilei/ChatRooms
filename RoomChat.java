@@ -13,7 +13,7 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
         this.userList = new HashMap<>();
     }
 
-    public synchronized void sendMsg(String usrName, String msg) throws RemoteException 
+    public void sendMsg(String usrName, String msg) throws RemoteException 
     {
         System.out.println("Mensagem enviada: " + msg);
         for (IUserChat user : userList.values()) 
@@ -22,7 +22,7 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
         }
     }
 
-    public synchronized void joinRoom(String usrName, IUserChat user) throws RemoteException 
+    public void joinRoom(String usrName, IUserChat user) throws RemoteException 
     {
         userList.put(usrName, user);
         
@@ -32,12 +32,12 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
         }
     }
 
-    public synchronized void leaveRoom(String usrName) throws RemoteException 
+    public void leaveRoom(String usrName) throws RemoteException 
     {
         userList.remove(usrName);
     }
 
-    public synchronized void closeRoom() throws RemoteException 
+    public void closeRoom() throws RemoteException 
     {
         for (IUserChat user : userList.values()) 
         {

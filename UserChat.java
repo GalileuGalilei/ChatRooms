@@ -178,6 +178,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         }
 
         try {
+            System.out.println(host + '/' + roomName);
             currentRoom = (IRoomChat) Naming.lookup(host + '/' + roomName);
         } catch (Exception e) {
             currentRoom = null;
