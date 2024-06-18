@@ -46,7 +46,7 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BorderLayout());
 
-        JTextField roomNameField = new JTextField();
+        final JTextField roomNameField = new JTextField();
         JButton createRoomButton = new JButton("Create Room");
         createRoomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -84,16 +84,18 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
     
             // Close room button
             JButton closeButton = new JButton("Close");
+            final String roomName = room;
             closeButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        closeRoom(room);
+                        closeRoom(roomName);
                         updateRoomList();
                     } catch (RemoteException ex) {
                         ex.printStackTrace();
                     }
                 }
             });
+
             panel.add(closeButton);
             panel.setSize(new Dimension(500, 50));
             panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -121,7 +123,7 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            messageArea.append("Room created: " + roomName + "\n");
+            updateRoomList();
         }
     }
 
@@ -151,7 +153,7 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
             Registry registry = LocateRegistry.createRegistry(port);
             IServerChat server = new ServerChat(registry);
             registry.rebind("Servidor", server);
-            System.out.println("Server is ready.");
+            System.out.println("Server is ready at adress " + registry.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }

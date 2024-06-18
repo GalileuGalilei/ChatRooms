@@ -72,7 +72,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         //setflowlayout
         controlPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
-        JTextField roomNameField = new JTextField();
+        final JTextField roomNameField = new JTextField();
         roomNameField.setPreferredSize(new Dimension(200, 30));
         JButton createRoomButton = new JButton("Create Rooms");
         createRoomButton.addActionListener(new ActionListener() {
@@ -116,10 +116,11 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
     private void updateRoomList() throws RemoteException {
         roomPanel.removeAll();
         for (String room : server.getRooms()) {
+            final String roomName = room;
             JPanel panel = new JPanel();
             panel.setLayout(new FlowLayout(FlowLayout.LEFT));
             
-            JLabel roomLabel = new JLabel(room);
+            JLabel roomLabel = new JLabel(roomName);
             panel.add(roomLabel);
     
             // Join room button
@@ -202,7 +203,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
 
     public static void main(String[] args) 
     {
-        String host = "26.244.44.147";
+        String host = "26.3.100.186";
         int port = 2020;
 
         try {
