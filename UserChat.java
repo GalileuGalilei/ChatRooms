@@ -4,6 +4,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import javax.swing.*;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Panel;
 import java.awt.event.*;
 
 public class UserChat extends UnicastRemoteObject implements IUserChat {
@@ -14,6 +21,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
     private JFrame frame;
     private JTextArea chatArea;
     private JTextField inputField;
+    private Container roomPanel;
 
     protected UserChat(String usrName, IServerChat server, Registry registry) throws RemoteException {
         this.usrName = usrName;
@@ -22,32 +30,131 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         setupUI();
     }
 
-    private void setupUI() {
-        frame = new JFrame("Chat Room");
+    private void setupUI() throws RemoteException {
+        frame = new JFrame("Server Chat");
+        
+        // Message area to show user messages
+
+        Panel messagePanel = new Panel();
+        messagePanel.setPreferredSize(new Dimension(200, 100));
+        
         chatArea = new JTextArea();
-        inputField = new JTextField();
-
+        chatArea.setPreferredSize(new Dimension(200, 380));
         chatArea.setEditable(false);
-        chatArea.setLineWrap(true);
-        chatArea.setWrapStyleWord(true);
+        inputField = new JTextField();
+        inputField.setPreferredSize(new Dimension(200, 20));
+        //when enter is pressed
+        inputField.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        sendMessage(inputField.getText());
+                        inputField.setText("");
+                    } catch (RemoteException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+        messagePanel.add(chatArea, BorderLayout.NORTH);
+        messagePanel.add(inputField, BorderLayout.SOUTH);
+        frame.add(messagePanel, BorderLayout.EAST);
 
-        inputField.addActionListener(new ActionListener() {
+        // Room panel to show available rooms
+        roomPanel = new JPanel();
+        roomPanel.setLayout(new BoxLayout(roomPanel, BoxLayout.Y_AXIS));
+        
+        JScrollPane scrollPane = new JScrollPane(roomPanel);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        // Control panel to create rooms
+        JPanel controlPanel = new JPanel();
+        //setflowlayout
+        controlPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+
+        JTextField roomNameField = new JTextField();
+        roomNameField.setPreferredSize(new Dimension(200, 30));
+        JButton createRoomButton = new JButton("Create Rooms");
+        createRoomButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    sendMessage(inputField.getText());
-                    inputField.setText("");
+                    String roomName = roomNameField.getText().trim();
+                    if (!roomName.isEmpty()) {
+                        server.createRoom(roomName);
+                        updateRoomList();
+                    }
                 } catch (RemoteException ex) {
                     ex.printStackTrace();
                 }
             }
         });
 
-        frame.add(new JScrollPane(chatArea), "Center");
-        frame.add(inputField, "South");
+        JButton refreshRoomList = new JButton("Refresh Rooms");
+        refreshRoomList.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    updateRoomList();
+                } catch (RemoteException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
 
-        frame.setSize(400, 400);
+        controlPanel.add(roomNameField);
+        controlPanel.add(createRoomButton);
+        controlPanel.add(refreshRoomList);
+        frame.add(controlPanel, BorderLayout.SOUTH);
+
+
+        frame.setSize(500, 500);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+
+        updateRoomList();
+    }
+
+    private void updateRoomList() throws RemoteException {
+        roomPanel.removeAll();
+        for (String room : server.getRooms()) {
+            JPanel panel = new JPanel();
+            panel.setLayout(new FlowLayout(FlowLayout.LEFT));
+            
+            JLabel roomLabel = new JLabel(room);
+            panel.add(roomLabel);
+    
+            // Join room button
+            JButton joinButton = new JButton("Join");
+            joinButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        joinRoom(room);
+                    } catch (RemoteException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            panel.add(joinButton);
+    
+            // Leave room button
+            JButton leaveButton = new JButton("Leave");
+            leaveButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        currentRoom.leaveRoom(usrName);
+                    } catch (RemoteException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            panel.add(leaveButton);
+            panel.setSize(new Dimension(500, 50));
+            panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+    
+            roomPanel.add(panel);
+            
+        }
+        roomPanel.revalidate();
+        roomPanel.repaint();
     }
 
     public void deliverMsg(String senderName, String msg) throws RemoteException {
@@ -56,7 +163,11 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
 
     public void listRooms() throws RemoteException {
         ArrayList<String> rooms = server.getRooms();
-        JOptionPane.showMessageDialog(frame, "Available rooms: " + rooms);
+        String roomList = "Rooms:\n";
+        for (String room : rooms) {
+            roomList += room + "\n";
+        }
+        JOptionPane.showMessageDialog(frame, roomList);
     }
 
     public void joinRoom(String roomName) throws RemoteException {
@@ -72,10 +183,11 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         }
 
         if (currentRoom == null) {
-            JOptionPane.showMessageDialog(frame, "Room not found.");
+            JOptionPane.showMessageDialog(frame, "Room " + roomName + " not found.");
             return;
         }
 
+        System.out.println("Joining room " + roomName);
         currentRoom.joinRoom(usrName, this);
         chatArea.setText(""); // Clear the chat area for the new room
     }
@@ -88,9 +200,10 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         }
     }
 
-    public static void main(String[] args) {
-        String host = "26.3.100.186";
-        int port = 3000;
+    public static void main(String[] args) 
+    {
+        String host = "26.244.44.147";
+        int port = 2020;
 
         try {
             Registry registry = LocateRegistry.getRegistry(host, port);
@@ -103,32 +216,6 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
 
             UserChat client = new UserChat(usrName, server, registry);
             registry.rebind(usrName, client);
-
-            while (true) {
-                String[] options = {"List rooms", "Create room", "Join room"};
-                int choice = JOptionPane.showOptionDialog(null, "Choose an option:", "Chat Client",
-                        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
-
-                switch (choice) {
-                    case 0:
-                        client.listRooms();
-                        break;
-                    case 1:
-                        String roomName = JOptionPane.showInputDialog("Enter room name to create:");
-                        if (roomName != null && !roomName.trim().isEmpty()) {
-                            server.createRoom(roomName);
-                        }
-                        break;
-                    case 2:
-                        roomName = JOptionPane.showInputDialog("Enter room name to join:");
-                        if (roomName != null && !roomName.trim().isEmpty()) {
-                            client.joinRoom(roomName);
-                        }
-                        break;
-                    default:
-                        System.exit(0);
-                }
-            }
 
         } catch (Exception e) {
             e.printStackTrace();

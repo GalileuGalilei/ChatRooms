@@ -15,6 +15,7 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
 
     public synchronized void sendMsg(String usrName, String msg) throws RemoteException 
     {
+        System.out.println("Mensagem enviada: " + msg);
         for (IUserChat user : userList.values()) 
         {
             user.deliverMsg(usrName, msg);
@@ -24,6 +25,7 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
     public synchronized void joinRoom(String usrName, IUserChat user) throws RemoteException 
     {
         userList.put(usrName, user);
+        this.sendMsg("ROOM", usrName + " entrou na sala ");
     }
 
     public synchronized void leaveRoom(String usrName) throws RemoteException 
@@ -33,6 +35,10 @@ public class RoomChat extends UnicastRemoteObject implements IRoomChat {
 
     public synchronized void closeRoom() throws RemoteException 
     {
+        for (IUserChat user : userList.values()) 
+        {
+            user.deliverMsg("Servidor", "Sala fechada pelo servidor");
+        }
         userList.clear();
     }
 
