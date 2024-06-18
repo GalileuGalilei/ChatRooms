@@ -189,8 +189,8 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
             return;
         }
 
+        currentRoom.joinRoom(usrName, (IUserChat)this);
         System.out.println("Joining room " + roomName);
-        currentRoom.joinRoom(usrName, this);
         chatArea.setText(""); // Clear the chat area for the new room
     }
 
@@ -216,7 +216,6 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
             }
 
             UserChat client = new UserChat(usrName, server, host);
-            Naming.rebind(host + '/' + "usrName", client);
 
         } catch (Exception e) {
             e.printStackTrace();
