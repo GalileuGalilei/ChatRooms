@@ -141,7 +141,7 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
             roomList.remove(roomName);
             rooms.remove(roomName);
             try {
-                registry.unbind(roomName);
+                Naming.unbind(host + '/' + roomName);
             } catch (Exception e) {
                 e.printStackTrace();
             }
