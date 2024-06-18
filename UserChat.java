@@ -1,4 +1,5 @@
 import java.rmi.server.UnicastRemoteObject;
+import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,16 +18,16 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
     private String usrName;
     private IServerChat server;
     private IRoomChat currentRoom;
-    private Registry registry;
+    private String host;
     private JFrame frame;
     private JTextArea chatArea;
     private JTextField inputField;
     private Container roomPanel;
 
-    protected UserChat(String usrName, IServerChat server, Registry registry) throws RemoteException {
+    protected UserChat(String usrName, IServerChat server, String host) throws RemoteException {
         this.usrName = usrName;
         this.server = server;
-        this.registry = registry;
+        this.host = host;
         setupUI();
     }
 
@@ -128,7 +129,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
             joinButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        joinRoom(room);
+                        joinRoom(roomName);
                     } catch (RemoteException ex) {
                         ex.printStackTrace();
                     }
@@ -177,7 +178,7 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
         }
 
         try {
-            currentRoom = (IRoomChat) registry.lookup(roomName);
+            currentRoom = (IRoomChat) Naming.lookup(host + '/' + roomName);
         } catch (Exception e) {
             currentRoom = null;
             e.printStackTrace();
@@ -203,20 +204,19 @@ public class UserChat extends UnicastRemoteObject implements IUserChat {
 
     public static void main(String[] args) 
     {
-        String host = "26.3.100.186";
+        String host = "rmi://192.168.161.105:2020";
         int port = 2020;
 
         try {
-            Registry registry = LocateRegistry.getRegistry(host, port);
-            IServerChat server = (IServerChat) registry.lookup("Servidor");
+            IServerChat server = (IServerChat) Naming.lookup(host + '/' + "Servidor");
 
             String usrName = JOptionPane.showInputDialog("Enter your name:");
             if (usrName == null || usrName.trim().isEmpty()) {
                 System.exit(0);
             }
 
-            UserChat client = new UserChat(usrName, server, registry);
-            registry.rebind(usrName, client);
+            UserChat client = new UserChat(usrName, server, host);
+            Naming.rebind(host + '/' + "usrName", client);
 
         } catch (Exception e) {
             e.printStackTrace();

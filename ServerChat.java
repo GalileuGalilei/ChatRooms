@@ -1,3 +1,4 @@
+import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,12 +18,13 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
     private JFrame frame;
     private JPanel roomPanel;
     private JTextArea messageArea;
+    private String host;
 
-    public ServerChat(Registry registry) throws RemoteException {
+    public ServerChat(String host) throws RemoteException {
         roomList = new ArrayList<>();
         rooms = new HashMap<>();
-        this.registry = registry;
         setupUI();
+        this.host = host;
     }
 
     private void setupUI() throws RemoteException {
@@ -147,13 +149,14 @@ public class ServerChat extends UnicastRemoteObject implements IServerChat {
     }
 
     public static void main(String[] args) {
+        String host = "rmi://192.168.161.105:2020";
         int port = 2020;
 
         try {
-            Registry registry = LocateRegistry.createRegistry(port);
-            IServerChat server = new ServerChat(registry);
-            registry.rebind("Servidor", server);
-            System.out.println("Server is ready at adress " + registry.toString());
+            LocateRegistry.createRegistry(port);
+            IServerChat server = new ServerChat(host);
+            Naming.rebind(host + '/' + "Servidor", server);
+            System.out.println("Server is ready at adress");
         } catch (Exception e) {
             e.printStackTrace();
         }
